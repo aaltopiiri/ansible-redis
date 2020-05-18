@@ -21,6 +21,9 @@
 - name: Place the redis.conf file on all hosts
   copy: src=redis.conf dest=/etc/redis.conf
 
+- name: Place the sentinel.conf file on all hosts
+  copy: src=sentinel.conf dest=/etc/centinel.conf
+
 - name: Ensure /var/log/redis/ exists
   file: path=/var/log/redis owner=root group=root mode=0655 state=directory
 
