@@ -1,0 +1,9 @@
+---
+- name: Configure redis servers
+  hosts: all
+  become: True
+  tasks:
+  - name: Update the system
+    yum:
+      name: "*"
+      state: latest

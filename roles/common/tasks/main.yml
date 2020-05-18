@@ -1,0 +1,64 @@
+---
+- name: Install development tools
+  yum: name="@Development tools" state=present
+
+- name: Ensure required packages are installed
+  yum: name={{ item }} state=present
+  with_items:
+    - ruby
+    - rubygems
+    - mc
+    - tcl
+
+# - name: Passwordless sudo
+#   lineinfile:
+#       path: /etc/sudoers
+#       state: present
+#       regexp: '^%sudo'
+#       line: '%sudo ALL=(ALL) NOPASSWD: ALL'
+#       validate: 'visudo -cf %s'
+
+- name: Place the redis.conf file on all hosts
+  copy: src=redis.conf dest=/etc/redis.conf
+
+- name: Ensure /var/log/redis/ exists
+  file: path=/var/log/redis owner=root group=root mode=0655 state=directory
+
+- name: Ensure /var/lib/redis/ exsists
+  file: path=/var/lib/redis owner=root group=root mode=0655 state=directory
+
+- name: Place the redis files on each server
+  get_url: url=http://download.redis.io/releases/redis-5.0.9.tar.gz dest=/home/ec2-user/redis-5.0.9.tar.gz
+
+- name: Untar redis files
+  unarchive: src=/home/ec2-user/redis-5.0.9.tar.gz dest=/home/ec2-user/ copy=no
+
+- name: Make redis bins
+  shell: |
+    make
+#    make test
+  args:
+    chdir: /home/ec2-user/redis-5.0.9/
+
+- name: Make install redis bins
+  become: True
+  shell: make install
+  args:
+    chdir: /home/ec2-user/redis-5.0.9/
+
+#- name: Open up port 6379 on iptables
+#  shell: iptables -I INPUT -p tcp --dport 6379 -j ACCEPT; service iptables save; service iptables reload
+
+#- name: Open up port 16379 on iptables
+#  shell: iptables -I INPUT -p tcp --dport 16379 -j ACCEPT; service iptables save; service iptables reload
+
+- name: Set Path for Redis
+  shell: echo $PATH
+  environment:
+    PATH: "/home/ec2-user/redis-5.0.9/src:{{ ansible_env.PATH }}"
+
+- name: Start redis
+  shell: ./redis-server /etc/redis.conf
+  become: True
+  args:
+    chdir: /home/ec2-user/redis-5.0.9/src/
